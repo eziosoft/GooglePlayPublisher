@@ -8,6 +8,7 @@ from apiclient.discovery import build
 from oauth2client import client
 from oauth2client.service_account import ServiceAccountCredentials
 from googleapiclient.http import MediaFileUpload
+import json
 
 dotenv.load_dotenv()
 
@@ -40,7 +41,7 @@ class GooglePlayPublisher:
         except client.AccessTokenRefreshError:
             print('The credentials have been revoked or expired. Please re-run the application to re-authorize.')
 
-    def upload_aab(self, package_name, aab_file, track):
+    def upload_aab(self, package_name, aab_file, track, release_notes):
         try:
             edit_request = self.service.edits().insert(body={}, packageName=package_name)
             result = edit_request.execute()
@@ -56,7 +57,8 @@ class GooglePlayPublisher:
                 "track": track,
                 "releases": [{
                     "versionCodes": [str(upload_result['versionCode'])],
-                    "status": "completed"
+                    "status": "completed",
+                    "releaseNotes": release_notes
                 }]
             }
             self.service.edits().tracks().update(
@@ -74,6 +76,7 @@ def main():
     argparser.add_argument('--aab', help='Path to the AAB file', required=False)
     argparser.add_argument('--track', help='Track to upload the AAB file to (internal, alpha, beta, production)',
                            required=False)
+    argparser.add_argument('--release-notes', help='JSON string with release notes, e.g. {"en-US": "Bug fixes."}', required=False)
     args = argparser.parse_args()
 
     service_account_email = os.getenv("SERVICE_ACCOUNT_EMAIL")
@@ -82,7 +85,15 @@ def main():
     publisher = GooglePlayPublisher(service_account_email, key_file)
 
     if args.aab:
-        publisher.upload_aab(args.package_name, args.aab, args.track)
+        release_notes = []
+        if args.release_notes:
+            try:
+                notes_dict = json.loads(args.release_notes)
+                release_notes = [{"language": lang, "text": text} for lang, text in notes_dict.items()]
+            except json.JSONDecodeError:
+                print("Invalid release notes format. Please provide a valid JSON string.")
+                return
+        publisher.upload_aab(args.package_name, args.aab, args.track, release_notes)
     else:
         publisher.list_bundles(args.package_name)
 

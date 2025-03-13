@@ -47,7 +47,7 @@ python main.py <package_name> --aab <path_to_aab> --track <track>
 ```
 Example:
 ```sh
-python main.py com.example.app --aab my_app.aab --track internal
+python main.py com.example.app --aab my_app.aab --track internal --release-notes '{"en-US": "Initial release"}'
 ```
 
 ### Available Tracks
