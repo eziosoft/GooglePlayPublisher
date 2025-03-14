@@ -61,6 +61,3 @@ python main.py com.example.app --aab my_app.aab --track internal --release-notes
 - The `key.p12` file should be placed in the project root.
 - The `--track` parameter is required when uploading an AAB.
 
-## License
-MIT License
-
